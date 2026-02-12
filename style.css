@@ -1,0 +1,95 @@
+:root {
+  --bg: #f4f4f4;
+  --card: #ffffff;
+  --text: #111;
+}
+
+body.dark {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: 0.3s;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111;
+  color: white;
+  padding: 12px 15px;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+select, button {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+main {
+  padding: 10px;
+}
+
+.match {
+  background: var(--card);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.league {
+  font-size: 12px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: gray;
+}
+
+.teams {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 35%;
+}
+
+.score {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.live {
+  color: red;
+  font-weight: bold;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.3; }
+}
