@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Live Score PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:white;
+}
+.light{
+  --bg:#f1f5f9;
+  --card:white;
+  --text:#111;
+}
+body{
+  font-family:Segoe UI;
+  background:var(--bg);
+  color:var(--text);
+  margin:0;
+  padding:15px;
+  transition:0.3s;
+}
+h1{text-align:center;}
+.topbar{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:15px;
+}
+button{
+  padding:8px 15px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+}
+.match{
+  background:var(--card);
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.3);
+  transition:0.3s;
+}
+.goalFlash{
+  animation:flash 0.6s alternate 6;
+}
+@keyframes flash{
+  from{background:#14532d;}
+  to{background:var(--card);}
+}
+.league{
+  font-size:13px;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.league img{height:16px;}
+.teams{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.team{text-align:center;width:35%;}
+.team img{height:45px;}
+.score{
+  font-size:28px;
+  font-weight:bold;
+  width:30%;
+  text-align:center;
+}
+.status{
+  text-align:center;
+  margin-top:5px;
+  font-size:13px;
+  color:#22c55e;
+}
+</style>
+</head>
+<body>
+
+<h1>⚽ LIVE SCORE PRO</h1>
+
+<div class="topbar">
+  <button onclick="toggleTheme()">🌗 Mode</button>
+  <button onclick="enableNotif()">🔔 Notifikasi</button>
+</div>
+
+<div id="matches">Loading...</div>
+
+<script>
+
+const API_KEY="9658cfc38277a5c1b3a4af706ae2d77d";
+const LEAGUE_ID=39; // Premier League
+const SEASON=2026;
+
+let previousScores={};
+
+async function getMatches(){
+
+  try{
+
+    let res, data;
+
+    // 1️⃣ Coba ambil LIVE
+res = await fetch(
+  `https://v3.football.api-sports.io/fixtures?live=all&league=39,140,78`,
+  { headers:{"x-apisports-key":API_KEY} }
+);
+
+    data = await res.json();
+
+    // 2️⃣ Kalau tidak ada LIVE → ambil hari ini
+    if(!data.response || data.response.length===0){
+      const today=new Date().toISOString().split("T")[0];
+
+      res = await fetch(
+        `https://v3.football.api-sports.io/fixtures?league=${LEAGUE_ID}&season=${SEASON}&date=${today}`,
+        { headers:{"x-apisports-key":API_KEY} }
+      );
+
+      data = await res.json();
+    }
+
+    // 3️⃣ Kalau masih kosong → ambil 5 pertandingan terakhir
+    if(!data.response || data.response.length===0){
+
+      res = await fetch(
+        `https://v3.football.api-sports.io/fixtures?league=${LEAGUE_ID}&season=${SEASON}&last=5`,
+        { headers:{"x-apisports-key":API_KEY} }
+      );
+
+      data = await res.json();
+    }
+
+    if(!data.response || data.response.length===0){
+      document.getElementById("matches").innerHTML="Tidak ada data tersedia.";
+      return;
+    }
+
+    renderMatches(data.response);
+
+  }catch(err){
+    document.getElementById("matches").innerHTML="Error ambil data.";
+  }
+}
+
+function renderMatches(matches){
+
+  let html="";
+
+  matches.forEach(match=>{
+
+    let id=match.fixture.id;
+    let score=`${match.goals.home}-${match.goals.away}`;
+
+    let flash="";
+    if(previousScores[id] && previousScores[id]!==score){
+      flash="goalFlash";
+      sendGoalNotif(match);
+    }
+
+    previousScores[id]=score;
+
+    html+=`
+    <div class="match ${flash}">
+      <div class="league">
+        <img src="${match.league.logo}">
+        <img src="${match.league.flag}">
+        ${match.league.name}
+      </div>
+
+      <div class="teams">
+        <div class="team">
+          <img src="${match.teams.home.logo}">
+          <div>${match.teams.home.name}</div>
+        </div>
+
+        <div class="score">
+          ${match.goals.home ?? 0} - ${match.goals.away ?? 0}
+        </div>
+
+        <div class="team">
+          <img src="${match.teams.away.logo}">
+          <div>${match.teams.away.name}</div>
+        </div>
+      </div>
+
+      <div class="status">
+        ${match.fixture.status.short} ${match.fixture.status.elapsed ?? ""}
+      </div>
+    </div>
+    `;
+  });
+
+  document.getElementById("matches").innerHTML=html;
+}
+
+function sendGoalNotif(match){
+  if(Notification.permission==="granted"){
+    new Notification("⚽ GOL!",{
+      body:`${match.teams.home.name} ${match.goals.home} - ${match.goals.away} ${match.teams.away.name}`
+    });
+  }
+}
+
+function enableNotif(){
+  Notification.requestPermission();
+}
+
+function toggleTheme(){
+  document.body.classList.toggle("light");
+}
+
+getMatches();
+setInterval(getMatches,20000);
+
+</script>
+
+</body>
+</html>
